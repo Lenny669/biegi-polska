@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Biegi w Polsce — kalendarz od 5 km do ultra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f4ef;--card:#fff;--ink:#16181d;--mute:#6b6f78;--line:#e3e0d8;
+  --accent:#e2461f;--accent2:#1f6f5c;--warn:#b86e00;--chip:#efece4;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#121316;--card:#1b1d22;--ink:#eceae4;--mute:#9a9ea8;--line:#2c2f36;--chip:#25282f;--accent:#ff6a3d;--accent2:#4fc3a1;--warn:#f0a940}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Archivo,system-ui,sans-serif;line-height:1.45}
+header{padding:28px 20px 12px;max-width:1180px;margin:0 auto}
+h1{font-size:clamp(26px,4vw,42px);font-weight:800;letter-spacing:-.02em;margin:0}
+h1 span{color:var(--accent)}
+.sub{color:var(--mute);margin:6px 0 0;font-size:15px}
+.meta{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--mute);margin-top:10px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 60px;display:grid;grid-template-columns:270px 1fr;gap:24px}
+@media(max-width:860px){.wrap{grid-template-columns:1fr}}
+aside{position:sticky;top:12px;align-self:start;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+@media(max-width:860px){aside{position:static}}
+aside h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute);margin:16px 0 8px}
+aside h3:first-child{margin-top:0}
+input[type=search],select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);font:inherit;font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--chip);color:var(--ink);padding:5px 10px;border-radius:999px;font-size:13px;cursor:pointer;user-select:none}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+label.tg{display:flex;gap:8px;align-items:center;font-size:14px;margin-top:6px;cursor:pointer}
+.reset{margin-top:14px;width:100%;padding:8px;border-radius:9px;border:1px dashed var(--line);background:none;color:var(--mute);cursor:pointer;font:inherit}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.count{font-weight:600}
+.bar select{width:auto}
+.list{display:grid;gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:grid;grid-template-columns:76px 1fr 220px;gap:16px;align-items:start}
+@media(max-width:700px){.card{grid-template-columns:62px 1fr}.price{grid-column:1/-1}}
+.date{text-align:center;border-right:1px solid var(--line);padding-right:12px}
+.date .d{font-size:28px;font-weight:800;line-height:1}
+.date .m{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute)}
+.date .y{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--mute)}
+.date .approx{font-size:10px;color:var(--warn);margin-top:4px}
+.name{font-size:18px;font-weight:700;margin:0 0 2px}
+.loc{color:var(--mute);font-size:14px}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.t{font-size:12px;padding:2px 8px;border-radius:6px;background:var(--chip)}
+.t.d{font-family:"JetBrains Mono",monospace}
+.t.s{background:color-mix(in srgb,var(--accent2) 16%,transparent);color:var(--accent2);font-weight:600}
+.t.trail{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.note{font-size:13px;color:var(--mute);margin-top:8px}
+.price{border-left:1px solid var(--line);padding-left:14px;display:flex;flex-direction:column;gap:6px}
+@media(max-width:700px){.price{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:12px}}
+.amt{font-size:24px;font-weight:800}
+.amt small{font-size:13px;font-weight:400;color:var(--mute)}
+.until{font-size:13px}
+.until b{color:var(--accent)}
+.next{font-size:12px;color:var(--mute)}
+.unk{font-size:13px;color:var(--mute)}
+.btn{display:inline-block;text-align:center;background:var(--accent);color:#fff;text-decoration:none;padding:9px 12px;border-radius:9px;font-weight:600;font-size:14px;margin-top:4px}
+.btn.alt{background:none;border:1px solid var(--line);color:var(--ink)}
+.status{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.status.open{color:var(--accent2)}.status.soon{color:var(--warn)}.status.closed{color:var(--mute)}
+.empty{padding:40px;text-align:center;color:var(--mute);background:var(--card);border-radius:14px;border:1px dashed var(--line)}
+footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:var(--mute);font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Biegi w Polsce <span>5 km → ultra</span></h1>
+  <p class="sub">Kalendarz imprez biegowych z filtrami, linkami do zapisów i aktualnymi progami cenowymi.</p>
+  <div class="meta" id="meta"></div>
+</header>
+
+<div class="wrap">
+<aside>
+  <h3>Szukaj</h3>
+  <input type="search" id="q" placeholder="nazwa, miasto…">
+  <h3>Dystans</h3>
+  <div class="chips" id="f-dist"></div>
+  <h3>Teren</h3>
+  <div class="chips" id="f-terrain"></div>
+  <h3>Województwo</h3>
+  <select id="f-voiv"><option value="">Cała Polska</option></select>
+  <h3>Seria / korona</h3>
+  <div class="chips" id="f-series"></div>
+  <h3>Miesiąc</h3>
+  <select id="f-month"><option value="">Dowolny</option></select>
+  <h3>Opcje</h3>
+  <label class="tg"><input type="checkbox" id="f-open"> Tylko otwarte zapisy</label>
+  <label class="tg"><input type="checkbox" id="f-price"> Tylko ze znaną ceną</label>
+  <label class="tg"><input type="checkbox" id="f-past"> Pokaż zakończone</label>
+  <button class="reset" id="reset">Wyczyść filtry</button>
+</aside>
+
+<main>
+  <div class="bar">
+    <div class="count" id="count"></div>
+    <select id="sort">
+      <option value="date">Sortuj: najbliższe</option>
+      <option value="deadline">Sortuj: najbliższa podwyżka</option>
+      <option value="price">Sortuj: najtańsze</option>
+      <option value="name">Sortuj: nazwa A–Z</option>
+    </select>
+  </div>
+  <div class="list" id="list"></div>
+</main>
+</div>
+
+<footer>
+  Ceny i terminy pochodzą ze stron organizatorów i są sprawdzane automatycznie raz na dobę. Przed zapisem zawsze potwierdź szczegóły na oficjalnej stronie biegu. Pomarańczowe „termin orientacyjny” oznacza, że organizator nie ogłosił jeszcze dokładnej daty.
+</footer>
+
+
+<script>
+(function(){
+fetch('races.json',{cache:'no-store'}).then(r=>r.json()).then(start).catch(()=>{document.getElementById('list').innerHTML='<div class="empty">Nie udało się wczytać danych (races.json).</div>';});
+function start(DATA){
+const today = new Date(); today.setHours(0,0,0,0);
+const MONTHS = ['sty','lut','mar','kwi','maj','cze','lip','sie','wrz','paź','lis','gru'];
+const MONTHS_FULL = ['styczeń','luty','marzec','kwiecień','maj','czerwiec','lipiec','sierpień','wrzesień','październik','listopad','grudzień'];
+const VOIVS = ['dolnośląskie','kujawsko-pomorskie','lubelskie','lubuskie','łódzkie','małopolskie','mazowieckie','opolskie','podkarpackie','podlaskie','pomorskie','śląskie','świętokrzyskie','warmińsko-mazurskie','wielkopolskie','zachodniopomorskie'];
+const DIST = [
+  {k:'5',  l:'5 km',      t:d=>d>=4&&d<=6.5},
+  {k:'10', l:'10 km',     t:d=>d>=9&&d<=11},
+  {k:'mid',l:'12–20 km',  t:d=>d>11&&d<20},
+  {k:'hm', l:'Półmaraton',t:d=>d>=20&&d<=22},
+  {k:'mid2',l:'23–40 km', t:d=>d>22&&d<40},
+  {k:'m',  l:'Maraton',   t:d=>d>=40&&d<=43},
+  {k:'u',  l:'Ultra',     t:d=>d>43}
+];
+const TERR = [{k:'ulica',l:'Ulica'},{k:'teren',l:'Teren / trail'},{k:'góry',l:'Góry'}];
+
+const pd = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
+const fmt = s => { const d=pd(s); return d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear(); };
+const days = s => Math.round((pd(s)-today)/86400000);
+const fmtKm = d => d===42.195?'42,2 km':d===21.1?'21,1 km':(String(d).replace('.',','))+' km';
+
+function currentPrice(r){
+  if(!r.price||!r.price.tiers||!r.price.tiers.length) return null;
+  const tiers=r.price.tiers;
+  for(let i=0;i<tiers.length;i++){
+    const t=tiers[i];
+    if(t.until===null || pd(t.until)>=today) return {cur:t, next:tiers[i+1]||null, cur_i:i};
+  }
+  return null;
+}
+function isPast(r){ return pd(r.end||r.date) < today; }
+function regState(r){
+  if(isPast(r)) return 'closed';
+  if(currentPrice(r)) return 'open';
+  return r.regStatus||'unknown';
+}
+
+// --- build filters
+const state = {dist:new Set(), terr:new Set(), series:new Set()};
+function chips(el, items, set){
+  items.forEach(it=>{
+    const c=document.createElement('span'); c.className='chip'; c.textContent=it.l;
+    c.onclick=()=>{ set.has(it.k)?set.delete(it.k):set.add(it.k); c.classList.toggle('on'); render(); save(); };
+    c.dataset.k=it.k; el.appendChild(c);
+  });
+}
+chips(document.getElementById('f-dist'), DIST, state.dist);
+chips(document.getElementById('f-terrain'), TERR, state.terr);
+const allSeries=[...new Set(DATA.races.flatMap(r=>r.series))].sort((a,b)=>a.localeCompare(b,'pl'));
+chips(document.getElementById('f-series'), allSeries.map(s=>({k:s,l:s})), state.series);
+const vSel=document.getElementById('f-voiv'); VOIVS.forEach(v=>vSel.add(new Option(v,v)));
+const mSel=document.getElementById('f-month');
+const monthKeys=[...new Set(DATA.races.map(r=>r.date.slice(0,7)))].sort();
+monthKeys.forEach(k=>{const [y,m]=k.split('-');mSel.add(new Option(MONTHS_FULL[+m-1]+' '+y,k));});
+
+const $=id=>document.getElementById(id);
+['q','f-voiv','f-month','f-open','f-price','f-past','sort'].forEach(id=>$(id).addEventListener('input',()=>{render();save();}));
+$('reset').onclick=()=>{state.dist.clear();state.terr.clear();state.series.clear();document.querySelectorAll('.chip.on').forEach(c=>c.classList.remove('on'));
+  $('q').value='';vSel.value='';mSel.value='';$('f-open').checked=false;$('f-price').checked=false;$('f-past').checked=false;render();save();};
+
+function save(){ try{localStorage.setItem('biegi-f',JSON.stringify({d:[...state.dist],t:[...state.terr],s:[...state.series],v:vSel.value,m:mSel.value,o:$('f-open').checked,p:$('f-price').checked,so:$('sort').value}));}catch(e){} }
+function load(){ try{const f=JSON.parse(localStorage.getItem('biegi-f')||'null'); if(!f)return;
+  const apply=(set,arr,box)=>arr.forEach(k=>{set.add(k);const c=[...$(box).children].find(x=>x.dataset.k===k);c&&c.classList.add('on');});
+  apply(state.dist,f.d||[],'f-dist');apply(state.terr,f.t||[],'f-terrain');apply(state.series,f.s||[],'f-series');
+  vSel.value=f.v||'';mSel.value=f.m||'';$('f-open').checked=!!f.o;$('f-price').checked=!!f.p;$('sort').value=f.so||'date';}catch(e){} }
+
+function matches(r){
+  const q=$('q').value.trim().toLowerCase();
+  if(q && !(r.name+' '+r.city).toLowerCase().includes(q)) return false;
+  if(!$('f-past').checked && isPast(r)) return false;
+  if(state.dist.size){ const ok=[...state.dist].some(k=>{const t=DIST.find(x=>x.k===k).t;return r.distances.some(t);}); if(!ok) return false; }
+  if(state.terr.size && !state.terr.has(r.terrain)) return false;
+  if(state.series.size && !r.series.some(s=>state.series.has(s))) return false;
+  if(vSel.value && !r.voiv.includes(vSel.value)) return false;
+  if(mSel.value && r.date.slice(0,7)!==mSel.value) return false;
+  if($('f-open').checked && regState(r)!=='open') return false;
+  if($('f-price').checked && !currentPrice(r)) return false;
+  return true;
+}
+
+function card(r){
+  const d=pd(r.date), cp=currentPrice(r), st=regState(r);
+  const url = r.url || ('https://www.google.com/search?q='+encodeURIComponent(r.name+' '+(r.date.slice(0,4))+' zapisy'));
+  const stLabel={open:'Zapisy otwarte',soon:'Zapisy wkrótce',closed:'Zakończony',unknown:'Zapisy: brak info'}[st];
+  const stCls={open:'open',soon:'soon',closed:'closed',unknown:'closed'}[st];
+  let priceHtml;
+  if(cp){
+    const c=cp.cur, cur=r.price.currency||'zł';
+    priceHtml=`<div class="amt">${c.amount} ${cur}${r.price.label?` <small>${r.price.label}</small>`:''}</div>`;
+    if(c.until){ const dl=days(c.until);
+      priceHtml+=`<div class="until">obowiązuje do <b>${fmt(c.until)}</b> (${dl===0?'ostatni dzień!':dl===1?'jeszcze 1 dzień':'jeszcze '+dl+' dni'})</div>`; }
+    else priceHtml+=`<div class="until">cena końcowa</div>`;
+    if(cp.next) priceHtml+=`<div class="next">potem: ${cp.next.amount} ${cur}${cp.next.until?' (do '+fmt(cp.next.until)+')':''}</div>`;
+  } else {
+    priceHtml=`<div class="unk">Cena jeszcze nieogłoszona lub nieznana — sprawdzimy przy kolejnej aktualizacji.</div>`;
+  }
+  const dateRange = r.end ? `${d.getDate()} ${MONTHS[d.getMonth()]} – ${fmt(r.end)}` : '';
+  return `<article class="card">
+    <div class="date"><div class="d">${d.getDate()}</div><div class="m">${MONTHS[d.getMonth()]}</div><div class="y">${d.getFullYear()}</div>${r.approx?'<div class="approx">termin orientacyjny</div>':''}</div>
+    <div>
+      <h2 class="name">${r.name}</h2>
+      <div class="loc">${r.city} · ${r.voiv.length>2?'kilka województw':r.voiv.join(', ')}${dateRange?' · '+dateRange:''}</div>
+      <div class="tags">
+        ${[...r.distances].sort((a,b)=>b-a).map(x=>`<span class="t d">${fmtKm(x)}</span>`).join('')}
+        <span class="t ${r.terrain!=='ulica'?'trail':''}">${TERR.find(t=>t.k===r.terrain).l}</span>
+        ${r.series.map(s=>`<span class="t s">👑 ${s}</span>`).join('')}
+      </div>
+      ${r.note?`<div class="note">${r.note}</div>`:''}
+    </div>
+    <div class="price">
+      <div class="status ${stCls}">${stLabel}</div>
+      ${priceHtml}
+      <a class="btn ${r.url?'':'alt'}" href="${url}" target="_blank" rel="noopener">${r.url?'Zapisy / strona biegu →':'Szukaj strony zapisów →'}</a>
+    </div>
+  </article>`;
+}
+
+function render(){
+  let rs=DATA.races.filter(matches);
+  const so=$('sort').value;
+  const dl=r=>{const c=currentPrice(r);return c&&c.cur.until?pd(c.cur.until):new Date(9e15);};
+  const pr=r=>{const c=currentPrice(r);return c?c.cur.amount:1e9;};
+  rs.sort((a,b)=> so==='name'?a.name.localeCompare(b.name,'pl') : so==='deadline'?dl(a)-dl(b) : so==='price'?pr(a)-pr(b) : pd(a.date)-pd(b.date));
+  $('count').textContent = rs.length+' '+(rs.length===1?'impreza':(rs.length%10>=2&&rs.length%10<=4&&(rs.length%100<10||rs.length%100>=20))?'imprezy':'imprez');
+  $('list').innerHTML = rs.length? rs.map(card).join('') : '<div class="empty">Brak biegów dla wybranych filtrów.</div>';
+}
+const lu=new Date(DATA.lastUpdated);
+$('meta').textContent='Ostatnia aktualizacja danych: '+lu.toLocaleString('pl-PL',{dateStyle:'long',timeStyle:'short'})+' · '+DATA.races.length+' imprez w bazie';
+load(); render();
+}
+})();
+</script>
+</body>
+</html>
