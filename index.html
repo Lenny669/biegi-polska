@@ -363,7 +363,7 @@ function renderCal(){
     const cls=['day']; if(d.getMonth()!==cal.m)cls.push('out'); if(+d===+today)cls.push('today'); if(d<today)cls.push('past'); if(d.getDay()===0||d.getDay()===6)cls.push('we');
     const show=evs.slice(0,3);
     html+=`<div class="${cls.join(' ')}" data-d="${k}"><span class="dn">${d.getDate()}</span>`+
-      show.map(r=>`<div class="ev${r.approx?' ap':''}" style="--c:var(${catOf(r).c})" data-id="${r.id}" title="${r.name}${r.approx?' (termin orientacyjny)':''}">${r.approx?'~ ':''}${r.name}</div>`).join('')+
+      show.map(r=>`<div class="ev${r.approx?' ap':''}" style="--c:var(${catOf(r).c})" data-id="${r.id}" title="${r.name}${r.approx?' (termin orientacyjny)':''}">${r.approx?'~ ':''}${r.short||r.name}</div>`).join('')+
       (evs.length>3?`<div class="more">+${evs.length-3} więcej</div>`:'')+
       (evs.length?`<div class="dots">${evs.slice(0,6).map(r=>`<span class="dot" style="--c:var(${catOf(r).c})"></span>`).join('')}</div>`:'')+
       `</div>`;
