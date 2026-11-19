@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Biegi w Polsce — kalendarz od 5 km do ultra</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23e2461f'/%3E%3Cpath d='M14 44h36M18 34h28M22 24h20' stroke='%23fff' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#f6f4ef" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121316" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
@@ -146,22 +149,113 @@ input[type=checkbox]{accent-color:var(--accent)}
 .pill:hover{border-color:var(--accent)}.pill:hover i{color:var(--accent)}
 .unk{font-size:13px;color:var(--mute)}
 [hidden]{display:none!important}
+
+/* ---------- odświeżony wygląd (listopad 2026) ---------- */
+:root{--shadow:0 1px 2px rgba(20,20,30,.04),0 4px 14px rgba(20,20,30,.05)}
+@media (prefers-color-scheme:dark){:root{--shadow:0 1px 2px rgba(0,0,0,.3)}}
+header{padding:28px 20px 14px}
+.hero{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.stats{display:flex;gap:8px;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column;align-items:flex-start;min-width:104px;padding:10px 14px;border-radius:12px;background:var(--card);border:1px solid var(--line);font:inherit;color:var(--ink);text-align:left;box-shadow:var(--shadow)}
+.stat b{font-size:22px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--mute)}
+button.stat{cursor:pointer}
+button.stat:hover{border-color:var(--accent)}
+button.stat b{color:var(--accent)}
+.meta{margin-top:14px}
+.tabs{padding:4px 20px 16px}
+.seg{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--chip);border:1px solid var(--line)}
+.tab{display:inline-flex;align-items:center;gap:7px;border:0;background:none;padding:8px 16px;border-radius:9px;color:var(--mute)}
+.tab svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tab:hover{color:var(--ink)}
+.tab.on{background:var(--card);color:var(--ink);border:0;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+aside{box-shadow:var(--shadow)}
+input[type=search]:focus,select:focus{outline:2px solid color-mix(in srgb,var(--accent) 45%,transparent);outline-offset:1px;border-color:var(--accent)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* nagłówki miesięcy na liście */
+.mhead{display:flex;align-items:baseline;gap:10px;margin:14px 0 -2px;font-size:15px;font-weight:800;text-transform:capitalize;letter-spacing:-.01em}
+.mhead:first-child{margin-top:0}
+.mhead small{font-size:12px;font-weight:500;color:var(--mute);text-transform:none}
+.mhead::after{content:"";flex:1;height:1px;background:var(--line);align-self:center}
+
+/* karta */
+.card{position:relative;overflow:hidden;padding:16px 18px 16px 22px;box-shadow:var(--shadow);transition:border-color .15s,box-shadow .15s,transform .15s}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c,var(--line))}
+.card:hover{border-color:color-mix(in srgb,var(--c,var(--mute)) 45%,var(--line));box-shadow:0 2px 6px rgba(20,20,30,.06),0 10px 24px rgba(20,20,30,.07)}
+.date .wd{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);margin-bottom:2px}
+.date .wd.we{color:var(--accent)}
+.date .d{font-variant-numeric:tabular-nums}
+.date .m{font-weight:600}
+.when{display:inline-block;margin-top:6px;font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;background:var(--chip);color:var(--ink);white-space:nowrap}
+.when.hot{background:var(--accent);color:#fff}
+.name{line-height:1.25}
+.t.d{font-weight:500}
+.t.d.max{background:var(--c);color:#fff}
+.status{display:inline-flex;align-items:center;gap:6px}
+.status::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.amt{line-height:1.1;font-variant-numeric:tabular-nums}
+.btn{transition:filter .15s}
+.btn:hover{filter:brightness(1.08)}
+.btn.alt:hover{border-color:var(--ink)}
+.unk.both{font-size:13px;line-height:1.35}
+
+@media(max-width:700px){
+  header{padding:18px 16px 8px}
+  .hero{gap:12px}
+  h1{font-size:26px}
+  .sub{font-size:14px;margin-top:4px}
+  .stats{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .stat{min-width:0;padding:8px 10px}
+  .stat b{font-size:18px}
+  .stat span{font-size:11px;line-height:1.25}
+  .meta{font-size:11px;margin-top:10px}
+  .meta .nx{display:none}
+  .tabs{padding:4px 16px 12px}
+  .seg{display:flex;width:100%}.tab{flex:1;justify-content:center}
+  .wrap{padding:0 16px 60px;gap:14px}
+  .card{grid-template-columns:54px 1fr;gap:12px;padding:14px 14px 14px 18px}
+  .date{padding-right:10px}
+  .date .d{font-size:24px}
+  .name{font-size:16px}
+  .loc{font-size:13px}
+  .price{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 12px;padding-top:10px}
+  .price>.status,.price>.amt,.price>.until,.price>.next,.price>.unk{grid-column:1}
+  .price>.btn{grid-column:2;grid-row:1/span 3;margin:0;padding:9px 12px;font-size:13px}
+  .price>.gcal{grid-column:1/-1;text-align:left;margin-top:2px}
+  .amt{font-size:20px}
+}
+@media(max-width:860px){
+  aside.closed{padding:0;border:0;background:none;box-shadow:none}
+  aside.closed .ftoggle{margin:0}
+  .ftoggle{font-weight:600;padding:10px 12px}
+}
+.totop{position:fixed;right:16px;bottom:16px;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:18px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.15);z-index:40}
+.totop:hover{border-color:var(--accent);color:var(--accent)}
+.day.we{background:color-mix(in srgb,var(--accent) 3%,transparent)}
+.day.out{background:color-mix(in srgb,var(--bg) 60%,transparent)}
+@media(max-width:700px){.calbar .count{width:100%;margin-left:0!important;font-size:14px;color:var(--mute)}}
 </style>
 </head>
 <body>
 <header>
-  <h1>Biegi w Polsce <span>5 km → ultra</span></h1>
-  <p class="sub">Kalendarz imprez biegowych z filtrami, linkami do zapisów i aktualnymi progami cenowymi.</p>
+  <div class="hero">
+    <div>
+      <h1>Biegi w Polsce <span>5 km → ultra</span></h1>
+      <p class="sub">Kalendarz imprez biegowych z filtrami, linkami do zapisów i aktualnymi progami cenowymi.</p>
+    </div>
+    <div class="stats" id="stats"></div>
+  </div>
   <div class="meta" id="meta"></div>
 </header>
-<nav class="tabs">
-  <a class="tab" href="#lista" data-v="lista">☰ Lista</a>
-  <a class="tab" href="#kalendarz" data-v="kalendarz">📅 Kalendarz</a>
-</nav>
+<nav class="tabs"><div class="seg">
+  <a class="tab" href="#lista" data-v="lista"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>Lista</a>
+  <a class="tab" href="#kalendarz" data-v="kalendarz"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Kalendarz</a>
+</div></nav>
 
 <div class="wrap">
 <aside class="closed" id="aside">
-  <button class="ib ftoggle" id="ftoggle">⚙ Pokaż filtry</button>
+  <button class="ib ftoggle" id="ftoggle">Pokaż filtry</button>
   <div class="ahead"><div><b>Filtry</b><span class="af" id="af"></span></div><button type="button" class="linkbtn" id="reset">Wyczyść</button></div>
   <h3>Szukaj</h3>
   <input type="search" id="q" placeholder="nazwa, miasto, seria…">
@@ -212,6 +306,7 @@ input[type=checkbox]{accent-color:var(--accent)}
 <footer>
   Ceny i terminy pochodzą ze stron organizatorów i są sprawdzane automatycznie trzy razy w tygodniu (pon, śr, pt około północy). Przed zapisem zawsze potwierdź szczegóły na oficjalnej stronie biegu. Pomarańczowe „termin orientacyjny” oznacza, że organizator nie ogłosił jeszcze dokładnej daty.
 </footer>
+<button type="button" class="totop" id="totop" aria-label="Do góry" hidden>↑</button>
 
 
 <script>
@@ -260,6 +355,7 @@ const terrLabel=k=>(TERR.find(t=>t.k===k)||{l:k||'—'}).l;
 const pd = s => { const [y,m,d]=String(s).split('-').map(Number); return new Date(y,m-1,d); };
 const fmt = s => { const d=pd(s); return d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear(); };
 const days = s => Math.round((pd(s)-today)/86400000);
+const WD=['nd','pn','wt','śr','cz','pt','sb'];
 const fmtKm = d => d===42.195?'42,2 km':d===21.1?'21,1 km':(String(d).replace('.',','))+' km';
 const plural=n=>n===1?'impreza':(n%10>=2&&n%10<=4&&(n%100<10||n%100>=20))?'imprezy':'imprez';
 
@@ -409,23 +505,25 @@ function card(r){
   } else {
     priceHtml=`<div class="unk">Cena: jeszcze nieogłoszona</div>`;
   }
+  const dn=days(r.date), de=r.end?days(r.end):dn;
+  const when = dn<0&&de>=0?'<span class="when hot">trwa</span>' : dn===0?'<span class="when hot">dziś</span>' : dn===1?'<span class="when hot">jutro</span>' : (dn>1&&dn<=60)?`<span class="when">za ${dn} dni</span>`:'';
+  const cat=catOf(r);
   const dateRange = r.end ? `${d.getDate()} ${MONTHS[d.getMonth()]} – ${fmt(r.end)}` : '';
   const voivTxt = r.voiv.length>2?'kilka województw':r.voiv.join(', ');
-  return `<article class="card">
-    <div class="date"><div class="d">${d.getDate()}</div><div class="m">${MONTHS[d.getMonth()]}</div><div class="y">${d.getFullYear()}</div>${r.approx?'<div class="approx">termin orientacyjny</div>':''}</div>
+  return `<article class="card" style="--c:var(${cat.c})">
+    <div class="date"><div class="wd${d.getDay()%6===0?' we':''}">${WD[d.getDay()]}</div><div class="d">${d.getDate()}</div><div class="m">${MONTHS[d.getMonth()]}</div>${d.getFullYear()!==today.getFullYear()?`<div class="y">${d.getFullYear()}</div>`:''}${r.approx?'<div class="approx">termin orientacyjny</div>':''}${when}</div>
     <div>
       <h2 class="name">${esc(r.name)}</h2>
       <div class="loc">${esc(r.city)}${voivTxt?' · '+esc(voivTxt):''}${dateRange?' · '+dateRange:''}</div>
       <div class="tags">
-        ${[...r.distances].sort((a,b)=>b-a).map(x=>`<span class="t d">${esc(fmtKm(x))}</span>`).join('')}
+        ${[...r.distances].sort((a,b)=>b-a).map((x,i)=>`<span class="t d${i===0&&r.distances.length>1?' max':''}">${esc(fmtKm(x))}</span>`).join('')}
         <span class="t ${r.terrain!=='ulica'?'trail':''}">${esc(terrLabel(r.terrain))}</span>
         ${r.series.map(s=>`<span class="t s">👑 ${esc(s)}</span>`).join('')}
       </div>
       ${r.note?`<div class="note">${esc(r.note)}</div>`:''}
     </div>
     <div class="price">
-      <div class="status ${stCls}">${stLabel}</div>
-      ${priceHtml}
+      ${(st==='unknown'&&!cp)?'<div class="unk both">Zapisy i cena: brak informacji</div>':`<div class="status ${stCls}">${stLabel}</div>${priceHtml}`}
       <a class="btn ${r.url?'':'alt'}" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${r.url?'Zapisy / strona biegu →':'Szukaj strony zapisów →'}</a>
       <a class="gcal" href="${esc(gcal(r))}" target="_blank" rel="noopener noreferrer">+ dodaj do Kalendarza Google</a>
     </div>
@@ -451,7 +549,7 @@ function renderActive(){
     b.onclick=()=>{ fn(); render(); save(); }; bar.appendChild(b); });
   if(items.length>1){ const b=document.createElement('button'); b.type='button'; b.className='pill'; b.dataset.reset=''; b.textContent='Wyczyść wszystko'; bar.appendChild(b); }
 }
-function updToggle(){ renderActive(); const a=$('aside'), n=activeCount(view==='kalendarz'); $('af').textContent=n?'('+n+')':''; $('reset').style.visibility=n?'visible':'hidden'; $('ftoggle').textContent=(a.classList.contains('closed')?'⚙ Pokaż filtry':'⚙ Ukryj filtry')+(n?' ('+n+' aktywne)':''); }
+function updToggle(){ renderActive(); const a=$('aside'), n=activeCount(view==='kalendarz'); $('af').textContent=n?'('+n+')':''; $('reset').style.visibility=n?'visible':'hidden'; $('ftoggle').textContent=(a.classList.contains('closed')?'Pokaż filtry':'Ukryj filtry')+(n?' ('+n+' aktywne)':''); }
 function render(){ try{ view==='kalendarz'?renderCal():renderList(); updToggle(); }catch(e){ console.error(e); showError('Wystąpił błąd podczas wyświetlania. Kliknij „Wyczyść filtry” albo odśwież stronę.'); } }
 function setView(v){
   view=(v==='kalendarz')?'kalendarz':'lista';
@@ -519,7 +617,13 @@ function renderList(){
   rs.sort((a,b)=> so==='name'?a.name.localeCompare(b.name,'pl') : so==='deadline'?(cmp(dl(a),dl(b))||cmp(+pd(a.date),+pd(b.date))) : so==='price'?(cmp(pr(a),pr(b))||cmp(+pd(a.date),+pd(b.date))) : cmp(+pd(a.date),+pd(b.date)));
   const n=activeCount(false);
   $('count').textContent=rs.length+' '+plural(rs.length);
-  $('list').innerHTML = rs.length? rs.map(card).join('') : emptyHtml('Brak biegów dla wybranych filtrów.',false);
+  let listHtml='';
+  if(so==='date'){
+    const per={}; rs.forEach(r=>{const k=r.date.slice(0,7); per[k]=(per[k]||0)+1;});
+    let cur='';
+    rs.forEach(r=>{ const k=r.date.slice(0,7); if(k!==cur){ cur=k; const [y,m]=k.split('-'); listHtml+=`<h2 class="mhead">${MONTHS_FULL[+m-1]} ${y}<small>${per[k]} ${plural(per[k])}</small></h2>`; } listHtml+=card(r); });
+  } else listHtml=rs.map(card).join('');
+  $('list').innerHTML = rs.length? listHtml : emptyHtml('Brak biegów dla wybranych filtrów.',false);
 }
 
 function nextUpdate(){
@@ -536,7 +640,22 @@ function fmtUpdated(s){
   catch(e){ return d.toLocaleString('pl-PL'); }
 }
 const nu=nextUpdate();
-$('meta').innerHTML='Ostatnia aktualizacja: <b>'+esc(fmtUpdated(DATA.lastUpdated))+'</b>'+(nu?' · Następna: <b>'+esc(nu.toLocaleDateString('pl-PL',{weekday:'long',day:'numeric',month:'long'}))+', ok. 00:00</b>':'')+' · '+races.length+' imprez w bazie';
+$('meta').innerHTML='Ostatnia aktualizacja: <b>'+esc(fmtUpdated(DATA.lastUpdated))+'</b>'+(nu?'<span class="nx"> · Następna: <b>'+esc(nu.toLocaleDateString('pl-PL',{weekday:'long',day:'numeric',month:'long'}))+', ok. 00:00</b></span>':'')+' · '+races.length+' imprez w bazie';
+(function stats(){
+  const up=races.filter(r=>!isPast(r));
+  const sat=new Date(today); const wd=today.getDay();
+  if(wd===0) sat.setDate(today.getDate()-1); else sat.setDate(today.getDate()+(6-wd));
+  const sun=new Date(sat); sun.setDate(sat.getDate()+1);
+  const from=wd===0?today:sat;
+  const wk=up.filter(r=>pd(r.date)<=sun && pd(r.end||r.date)>=from && !(r.end&&(pd(r.end)-pd(r.date))/86400000>6)).sort((a,b)=>pd(a.date)-pd(b.date)||b.maxDist-a.maxDist);
+  const open=up.filter(r=>regState(r)==='open').length;
+  const wkLabel=(wd===6||wd===0)?'w ten weekend':'w najbliższy weekend';
+  $('stats').innerHTML=`<div class="stat"><b>${up.length}</b><span>nadchodzących</span></div>`+
+    `<button type="button" class="stat" id="st-wk"><b>${wk.length}</b><span>${wkLabel}</span></button>`+
+    `<div class="stat"><b>${open}</b><span>z otwartymi zapisami</span></div>`;
+  $('st-wk').onclick=()=>openModal('Biegi '+wkLabel+' ('+sat.getDate()+'–'+sun.getDate()+' '+MONTHS[sun.getMonth()]+')',wk);
+})();
+const tt=$('totop'); window.addEventListener('scroll',()=>{ tt.hidden=window.scrollY<900; },{passive:true}); tt.onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
 $('ftoggle').onclick=()=>{$('aside').classList.toggle('closed');updToggle();};
 load(); setView(location.hash.slice(1));
 }
