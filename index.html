@@ -112,6 +112,17 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:var(--mute);font
 .cyc{border:1px solid var(--c);color:var(--ink);background:color-mix(in srgb,var(--c) 14%,transparent);border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer}
 .ftoggle{display:none;width:100%;margin-bottom:10px}
 @media(max-width:860px){.ftoggle{display:block}aside.closed>*:not(.ftoggle){display:none}}
+
+.chip{font:inherit;line-height:1.3}
+.cyc{font:inherit}
+.t.s{background:rgba(31,111,92,.14)}
+.t.trail{background:rgba(184,110,0,.14)}
+.ev.ap{background:transparent}
+@supports (background:color-mix(in srgb,red 50%,blue)){
+  .t.s{background:color-mix(in srgb,var(--accent2) 16%,transparent)}
+  .t.trail{background:color-mix(in srgb,var(--warn) 16%,transparent)}
+  .ev.ap{background:color-mix(in srgb,var(--c) 18%,transparent)}
+}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -182,7 +193,21 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:var(--mute);font
 
 <script>
 (function(){
-fetch('races.json',{cache:'no-store'}).then(r=>r.json()).then(start).catch(()=>{document.getElementById('list').innerHTML='<div class="empty">Nie udało się wczytać danych (races.json).</div>';});
+const $=id=>document.getElementById(id);
+const showError=msg=>{ const el=$('list'); if(el){ el.hidden=false; el.innerHTML='<div class="empty">'+msg+'</div>'; } };
+fetch('races.json',{cache:'no-store'})
+  .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+  .then(data=>{ try{ start(data); }catch(e){ console.error(e); showError('Wystąpił błąd podczas wyświetlania strony. Spróbuj kliknąć „Wyczyść filtry” albo odśwież stronę.'); } },
+        e=>{ console.error(e); showError('Nie udało się wczytać danych (races.json). Odśwież stronę za chwilę.'); });
+
+// ---------- pomocnicze ----------
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const safeUrl=u=>{ try{ const x=new URL(u); return (x.protocol==='https:'||x.protocol==='http:')?x.href:''; }catch(e){ return ''; } };
+const fold=s=>String(s||'').toLowerCase().replace(/ł/g,'l').normalize('NFD').replace(/[̀-ͯ]/g,'');
+const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
+const validDate=s=>{ if(typeof s!=='string'||!DATE_RE.test(s)) return false; const [y,m,d]=s.split('-').map(Number); const x=new Date(y,m-1,d); return x.getFullYear()===y&&x.getMonth()===m-1&&x.getDate()===d; };
+const STORE_KEY='biegi-f';
+
 function start(DATA){
 const today = new Date(); today.setHours(0,0,0,0);
 const MONTHS = ['sty','lut','mar','kwi','maj','cze','lip','sie','wrz','paź','lis','gru'];
@@ -205,21 +230,42 @@ const CATS = [
   {k:'10',l:'10–20 km',c:'--c-10',t:m=>m>=9},
   {k:'5',l:'5 km',c:'--c-5',t:m=>true}
 ];
-const catOf = r => CATS.find(c=>c.t(Math.max(...r.distances)));
 const UPDATE_DAYS=[1,3,5]; // pon, śr, pt — o północy (Europe/Warsaw)
 const TERR = [{k:'ulica',l:'Ulica'},{k:'teren',l:'Teren / trail'},{k:'góry',l:'Góry'}];
+const terrLabel=k=>(TERR.find(t=>t.k===k)||{l:k||'—'}).l;
 
-const pd = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
+const pd = s => { const [y,m,d]=String(s).split('-').map(Number); return new Date(y,m-1,d); };
 const fmt = s => { const d=pd(s); return d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear(); };
 const days = s => Math.round((pd(s)-today)/86400000);
 const fmtKm = d => d===42.195?'42,2 km':d===21.1?'21,1 km':(String(d).replace('.',','))+' km';
+const plural=n=>n===1?'impreza':(n%10>=2&&n%10<=4&&(n%100<10||n%100>=20))?'imprezy':'imprez';
+
+// ---------- walidacja danych (jeden zły wpis nie może wyłożyć strony) ----------
+const races=(Array.isArray(DATA&&DATA.races)?DATA.races:[]).filter(r=>r&&typeof r==='object'&&validDate(r.date)&&r.name).map((r,i)=>{
+  const dist=(Array.isArray(r.distances)?r.distances:[]).map(Number).filter(x=>isFinite(x)&&x>0);
+  const tiers=r.price&&Array.isArray(r.price.tiers)?r.price.tiers.filter(t=>t&&isFinite(Number(t.amount))&&(t.until===null||validDate(t.until))):[];
+  return Object.assign({},r,{
+    id:String(r.id||('bieg-'+i)),
+    end:(validDate(r.end)&&pd(r.end)>=pd(r.date))?r.end:null,
+    distances:dist,
+    maxDist:dist.length?Math.max(...dist):0,
+    series:(Array.isArray(r.series)?r.series:[]).filter(s=>typeof s==='string'&&s.trim()),
+    voiv:(Array.isArray(r.voiv)?r.voiv:(r.voiv?[r.voiv]:[])).filter(Boolean),
+    city:r.city||'',
+    url:safeUrl(r.url||''),
+    price:tiers.length?{currency:(r.price.currency||'zł'),label:r.price.label||'',tiers:tiers}:null
+  });
+}).map(r=>Object.assign(r,{name:String(r.name),short:r.short?String(r.short):'',note:r.note?String(r.note):'',
+  _search:fold([r.name,r.short,r.city,r.voiv.join(' '),r.series.join(' ')].join(' '))}));
+const byId=Object.fromEntries(races.map(r=>[r.id,r]));
+const catOf = r => CATS.find(c=>c.t(r.maxDist));
 
 function currentPrice(r){
-  if(!r.price||!r.price.tiers||!r.price.tiers.length) return null;
+  if(!r.price) return null;
   const tiers=r.price.tiers;
   for(let i=0;i<tiers.length;i++){
     const t=tiers[i];
-    if(t.until===null || pd(t.until)>=today) return {cur:t, next:tiers[i+1]||null, cur_i:i};
+    if(t.until===null || pd(t.until)>=today) return {cur:t, next:tiers[i+1]||null};
   }
   return null;
 }
@@ -227,43 +273,70 @@ function isPast(r){ return pd(r.end||r.date) < today; }
 function regState(r){
   if(isPast(r)) return 'closed';
   if(currentPrice(r)) return 'open';
-  return r.regStatus||'unknown';
+  return ['open','soon','unknown'].includes(r.regStatus)?r.regStatus:'unknown';
 }
 
-// --- build filters
+// ---------- filtry ----------
 const state = {dist:new Set(), terr:new Set(), series:new Set()};
 function chips(el, items, set){
   items.forEach(it=>{
-    const c=document.createElement('span'); c.className='chip'; c.textContent=it.l;
-    c.onclick=()=>{ set.has(it.k)?set.delete(it.k):set.add(it.k); c.classList.toggle('on'); render(); save(); };
+    const c=document.createElement('button'); c.type='button'; c.className='chip'; c.textContent=it.l;
+    c.onclick=()=>{ set.has(it.k)?set.delete(it.k):set.add(it.k); c.classList.toggle('on',set.has(it.k)); render(); save(); };
     c.dataset.k=it.k; el.appendChild(c);
   });
 }
-chips(document.getElementById('f-dist'), DIST, state.dist);
-chips(document.getElementById('f-terrain'), TERR, state.terr);
-const allSeries=[...new Set(DATA.races.flatMap(r=>r.series))].sort((a,b)=>a.localeCompare(b,'pl'));
-chips(document.getElementById('f-series'), allSeries.map(s=>({k:s,l:s})), state.series);
-const vSel=document.getElementById('f-voiv'); VOIVS.forEach(v=>vSel.add(new Option(v,v)));
-const mSel=document.getElementById('f-month');
-const monthKeys=[...new Set(DATA.races.map(r=>r.date.slice(0,7)))].sort();
+chips($('f-dist'), DIST, state.dist);
+chips($('f-terrain'), TERR, state.terr);
+const allSeries=[...new Set(races.flatMap(r=>r.series))].sort((a,b)=>a.localeCompare(b,'pl'));
+chips($('f-series'), allSeries.map(s=>({k:s,l:s})), state.series);
+const vSel=$('f-voiv'); VOIVS.forEach(v=>vSel.add(new Option(v,v)));
+const mSel=$('f-month');
+const monthKeys=[...new Set(races.map(r=>r.date.slice(0,7)))].sort();
 monthKeys.forEach(k=>{const [y,m]=k.split('-');mSel.add(new Option(MONTHS_FULL[+m-1]+' '+y,k));});
+const SORTS=['date','deadline','price','name'];
 
-const $=id=>document.getElementById(id);
-['q','f-voiv','f-month','f-open','f-price','f-past','sort'].forEach(id=>$(id).addEventListener('input',()=>{render();save();}));
-$('reset').onclick=()=>{state.dist.clear();state.terr.clear();state.series.clear();document.querySelectorAll('.chip.on').forEach(c=>c.classList.remove('on'));
-  $('q').value='';vSel.value='';mSel.value='';$('f-open').checked=false;$('f-price').checked=false;$('f-past').checked=false;render();save();};
+// Safari starszych wersji nie wysyła "input" dla checkboxów i selectów — słuchamy obu zdarzeń
+$('q').addEventListener('input',()=>{render();save();});
+['f-voiv','f-month','f-open','f-price','f-past','sort'].forEach(id=>['input','change'].forEach(ev=>$(id).addEventListener(ev,()=>{render();save();})));
 
-function save(){ try{localStorage.setItem('biegi-f',JSON.stringify({d:[...state.dist],t:[...state.terr],s:[...state.series],v:vSel.value,m:mSel.value,o:$('f-open').checked,p:$('f-price').checked,so:$('sort').value}));}catch(e){} }
-function load(){ try{const f=JSON.parse(localStorage.getItem('biegi-f')||'null'); if(!f)return;
-  const apply=(set,arr,box)=>arr.forEach(k=>{set.add(k);const c=[...$(box).children].find(x=>x.dataset.k===k);c&&c.classList.add('on');});
-  apply(state.dist,f.d||[],'f-dist');apply(state.terr,f.t||[],'f-terrain');apply(state.series,f.s||[],'f-series');
-  vSel.value=f.v||'';mSel.value=f.m||'';$('f-open').checked=!!f.o;$('f-price').checked=!!f.p;$('sort').value=f.so||'date';}catch(e){} }
+function resetFilters(){
+  state.dist.clear();state.terr.clear();state.series.clear();
+  document.querySelectorAll('.chip.on').forEach(c=>c.classList.remove('on'));
+  $('q').value='';vSel.value='';mSel.value='';$('f-open').checked=false;$('f-price').checked=false;$('f-past').checked=false;$('sort').value='date';
+  try{localStorage.removeItem(STORE_KEY);}catch(e){}
+  render();
+}
+$('reset').onclick=resetFilters;
+
+function save(){ try{localStorage.setItem(STORE_KEY,JSON.stringify({d:[...state.dist],t:[...state.terr],s:[...state.series],v:vSel.value,m:mSel.value,o:$('f-open').checked,p:$('f-price').checked,so:$('sort').value}));}catch(e){} }
+function load(){
+  let f=null; try{ f=JSON.parse(localStorage.getItem(STORE_KEY)||'null'); }catch(e){ f=null; }
+  if(!f||typeof f!=='object') return;
+  // przywracamy TYLKO wartości, które nadal istnieją na stronie (np. po zmianie nazwy serii)
+  const apply=(set,arr,box)=>{ if(!Array.isArray(arr)) return; arr.forEach(k=>{ const c=[...$(box).children].find(x=>x.dataset.k===k); if(c){ set.add(k); c.classList.add('on'); } }); };
+  apply(state.dist,f.d,'f-dist'); apply(state.terr,f.t,'f-terrain'); apply(state.series,f.s,'f-series');
+  vSel.value=VOIVS.includes(f.v)?f.v:'';
+  mSel.value=monthKeys.includes(f.m)?f.m:'';
+  $('f-open').checked=!!f.o; $('f-price').checked=!!f.p;
+  $('sort').value=SORTS.includes(f.so)?f.so:'date';
+  save(); // zapisz już oczyszczoną wersję
+}
+function activeCount(cal){
+  let n=state.dist.size+state.terr.size+state.series.size;
+  if($('q').value.trim())n++; if(vSel.value)n++; if(!cal&&mSel.value)n++; if($('f-open').checked)n++; if($('f-price').checked)n++;
+  return n;
+}
+function emptyHtml(msg,cal){
+  const n=activeCount(cal);
+  return '<div class="empty">'+esc(msg)+(n?'<br><br><button type="button" class="ib" data-reset>Wyczyść filtry ('+n+')</button>':'')+'</div>';
+}
+document.addEventListener('click',e=>{ if(e.target.closest('[data-reset]')){ closeModal(); resetFilters(); } });
 
 function matches(r,cal){
-  const q=$('q').value.trim().toLowerCase();
-  if(q && !(r.name+' '+r.city).toLowerCase().includes(q)) return false;
+  const q=fold($('q').value.trim());
+  if(q && !q.split(/\s+/).every(w=>r._search.includes(w))) return false;
   if(!cal && !$('f-past').checked && isPast(r)) return false;
-  if(state.dist.size){ const ok=[...state.dist].some(k=>{const t=DIST.find(x=>x.k===k).t;return r.distances.some(t);}); if(!ok) return false; }
+  if(state.dist.size){ const ok=[...state.dist].some(k=>{const d=DIST.find(x=>x.k===k); return d&&r.distances.some(d.t);}); if(!ok) return false; }
   if(state.terr.size && !state.terr.has(r.terrain)) return false;
   if(state.series.size && !r.series.some(s=>state.series.has(s))) return false;
   if(vSel.value && !r.voiv.includes(vSel.value)) return false;
@@ -273,6 +346,7 @@ function matches(r,cal){
   return true;
 }
 
+// ---------- karta biegu ----------
 function gcal(r){
   const s=r.date.replace(/-/g,''); const e=pd(r.end||r.date); e.setDate(e.getDate()+1);
   const ee=e.getFullYear()+String(e.getMonth()+1).padStart(2,'0')+String(e.getDate()).padStart(2,'0');
@@ -286,40 +360,43 @@ function card(r){
   const stCls={open:'open',soon:'soon',closed:'closed',unknown:'closed'}[st];
   let priceHtml;
   if(cp){
-    const c=cp.cur, cur=r.price.currency||'zł';
-    priceHtml=`<div class="amt">${c.amount} ${cur}${r.price.label?` <small>${r.price.label}</small>`:''}</div>`;
+    const c=cp.cur, cur=esc(r.price.currency);
+    priceHtml=`<div class="amt">${esc(c.amount)} ${cur}${r.price.label?` <small>${esc(r.price.label)}</small>`:''}</div>`;
     if(c.until){ const dl=days(c.until);
       priceHtml+=`<div class="until">obowiązuje do <b>${fmt(c.until)}</b> (${dl===0?'ostatni dzień!':dl===1?'jeszcze 1 dzień':'jeszcze '+dl+' dni'})</div>`; }
     else priceHtml+=`<div class="until">cena końcowa</div>`;
-    if(cp.next) priceHtml+=`<div class="next">potem: ${cp.next.amount} ${cur}${cp.next.until?' (do '+fmt(cp.next.until)+')':''}</div>`;
+    if(cp.next) priceHtml+=`<div class="next">potem: ${esc(cp.next.amount)} ${cur}${cp.next.until?' (do '+fmt(cp.next.until)+')':''}</div>`;
   } else {
     priceHtml=`<div class="unk">Cena jeszcze nieogłoszona lub nieznana — sprawdzimy przy kolejnej aktualizacji.</div>`;
   }
   const dateRange = r.end ? `${d.getDate()} ${MONTHS[d.getMonth()]} – ${fmt(r.end)}` : '';
+  const voivTxt = r.voiv.length>2?'kilka województw':r.voiv.join(', ');
   return `<article class="card">
     <div class="date"><div class="d">${d.getDate()}</div><div class="m">${MONTHS[d.getMonth()]}</div><div class="y">${d.getFullYear()}</div>${r.approx?'<div class="approx">termin orientacyjny</div>':''}</div>
     <div>
-      <h2 class="name">${r.name}</h2>
-      <div class="loc">${r.city} · ${r.voiv.length>2?'kilka województw':r.voiv.join(', ')}${dateRange?' · '+dateRange:''}</div>
+      <h2 class="name">${esc(r.name)}</h2>
+      <div class="loc">${esc(r.city)}${voivTxt?' · '+esc(voivTxt):''}${dateRange?' · '+dateRange:''}</div>
       <div class="tags">
-        ${[...r.distances].sort((a,b)=>b-a).map(x=>`<span class="t d">${fmtKm(x)}</span>`).join('')}
-        <span class="t ${r.terrain!=='ulica'?'trail':''}">${TERR.find(t=>t.k===r.terrain).l}</span>
-        ${r.series.map(s=>`<span class="t s">👑 ${s}</span>`).join('')}
+        ${[...r.distances].sort((a,b)=>b-a).map(x=>`<span class="t d">${esc(fmtKm(x))}</span>`).join('')}
+        <span class="t ${r.terrain!=='ulica'?'trail':''}">${esc(terrLabel(r.terrain))}</span>
+        ${r.series.map(s=>`<span class="t s">👑 ${esc(s)}</span>`).join('')}
       </div>
-      ${r.note?`<div class="note">${r.note}</div>`:''}
+      ${r.note?`<div class="note">${esc(r.note)}</div>`:''}
     </div>
     <div class="price">
       <div class="status ${stCls}">${stLabel}</div>
       ${priceHtml}
-      <a class="btn ${r.url?'':'alt'}" href="${url}" target="_blank" rel="noopener">${r.url?'Zapisy / strona biegu →':'Szukaj strony zapisów →'}</a>
-      <a class="gcal" href="${gcal(r)}" target="_blank" rel="noopener">+ dodaj do Kalendarza Google</a>
+      <a class="btn ${r.url?'':'alt'}" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${r.url?'Zapisy / strona biegu →':'Szukaj strony zapisów →'}</a>
+      <a class="gcal" href="${esc(gcal(r))}" target="_blank" rel="noopener noreferrer">+ dodaj do Kalendarza Google</a>
     </div>
   </article>`;
 }
 
+// ---------- widoki ----------
 let view='lista';
 const cal={y:today.getFullYear(),m:today.getMonth()};
-function render(){ view==='kalendarz'?renderCal():renderList(); }
+function updToggle(){ const a=$('aside'), n=activeCount(view==='kalendarz'); $('ftoggle').textContent=(a.classList.contains('closed')?'⚙ Pokaż filtry':'⚙ Ukryj filtry')+(n?' ('+n+' aktywne)':''); }
+function render(){ try{ view==='kalendarz'?renderCal():renderList(); updToggle(); }catch(e){ console.error(e); showError('Wystąpił błąd podczas wyświetlania. Kliknij „Wyczyść filtry” albo odśwież stronę.'); } }
 function setView(v){
   view=(v==='kalendarz')?'kalendarz':'lista';
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.v===view));
@@ -328,71 +405,83 @@ function setView(v){
   render();
 }
 window.addEventListener('hashchange',()=>setView(location.hash.slice(1)));
-$('c-prev').onclick=()=>{cal.m--; if(cal.m<0){cal.m=11;cal.y--;} renderCal();};
-$('c-next').onclick=()=>{cal.m++; if(cal.m>11){cal.m=0;cal.y++;} renderCal();};
-$('c-today').onclick=()=>{cal.y=today.getFullYear();cal.m=today.getMonth();renderCal();};
-mSel.addEventListener('input',()=>{ if(view==='kalendarz'&&mSel.value){const [y,m]=mSel.value.split('-');cal.y=+y;cal.m=+m-1;renderCal();} });
+$('c-prev').onclick=()=>{cal.m--; if(cal.m<0){cal.m=11;cal.y--;} render();};
+$('c-next').onclick=()=>{cal.m++; if(cal.m>11){cal.m=0;cal.y++;} render();};
+$('c-today').onclick=()=>{cal.y=today.getFullYear();cal.m=today.getMonth();render();};
+mSel.addEventListener('change',()=>{ if(view==='kalendarz'&&mSel.value){const [y,m]=mSel.value.split('-');cal.y=+y;cal.m=+m-1;render();} });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal();
-  if(view==='kalendarz' && !$('modal').classList.contains('on') && !/INPUT|SELECT/.test(document.activeElement.tagName)){ if(e.key==='ArrowLeft')$('c-prev').click(); if(e.key==='ArrowRight')$('c-next').click(); }});
+  const tag=(document.activeElement&&document.activeElement.tagName)||'';
+  if(view==='kalendarz' && !$('modal').classList.contains('on') && !/INPUT|SELECT|TEXTAREA/.test(tag)){ if(e.key==='ArrowLeft')$('c-prev').click(); if(e.key==='ArrowRight')$('c-next').click(); }});
 $('legend').innerHTML=CATS.map(c=>`<span><i style="--c:var(${c.c})"></i>${c.l}</span>`).join('')+'<span><i class="ap"></i>termin orientacyjny</span>';
 
 const iso = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-function openModal(title, races){
-  $('m-title').textContent=title; $('m-body').innerHTML=races.length?races.map(card).join(''):'<div class="empty">Brak biegów tego dnia.</div>';
+function openModal(title, list){
+  $('m-title').textContent=title; $('m-body').innerHTML=list.length?list.map(card).join(''):'<div class="empty">Brak biegów tego dnia (przy obecnych filtrach).</div>';
   $('modal').classList.add('on');
 }
 function closeModal(){ $('modal').classList.remove('on'); }
 $('mx').onclick=closeModal; $('modal').onclick=e=>{ if(e.target.id==='modal') closeModal(); };
 
+let byDay={};
 function renderCal(){
-  const rs=DATA.races.filter(r=>matches(r,true));
+  const rs=races.filter(r=>matches(r,true));
   const first=new Date(cal.y,cal.m,1), start=new Date(first); start.setDate(1-((first.getDay()+6)%7));
   const last=new Date(cal.y,cal.m+1,0), end=new Date(last); end.setDate(last.getDate()+(6-((last.getDay()+6)%7)));
   $('c-title').textContent=MONTHS_FULL[cal.m]+' '+cal.y;
   const isCycle=r=>r.end && (pd(r.end)-pd(r.date))/86400000>6;
   const cyc=rs.filter(r=>isCycle(r) && pd(r.date)<=last && pd(r.end)>=first);
-  $('c-cycles').innerHTML=cyc.length?'Trwające cykle: '+cyc.map(r=>`<span class="cyc" style="--c:var(${catOf(r).c})" data-id="${r.id}">🔁 ${r.name}</span>`).join(''):'';
-  $('c-cycles').querySelectorAll('.cyc').forEach(el=>el.onclick=()=>{const r=DATA.races.find(x=>x.id===el.dataset.id);openModal(r.name,[r]);});
-  const byDay={};
+  $('c-cycles').innerHTML=cyc.length?'Trwające cykle: '+cyc.map(r=>`<button type="button" class="cyc" style="--c:var(${catOf(r).c})" data-id="${esc(r.id)}">🔁 ${esc(r.name)}</button>`).join(''):'';
+  byDay={};
   rs.filter(r=>!isCycle(r)).forEach(r=>{ const s=pd(r.date), e=pd(r.end||r.date); for(let d=new Date(s); d<=e; d.setDate(d.getDate()+1)){ (byDay[iso(d)]=byDay[iso(d)]||[]).push(r);} });
   const inMonth=rs.filter(r=>!isCycle(r)).filter(r=>pd(r.date)<=last && pd(r.end||r.date)>=first);
-  $('c-count').textContent=inMonth.length+' '+(inMonth.length===1?'impreza':(inMonth.length%10>=2&&inMonth.length%10<=4&&(inMonth.length%100<10||inMonth.length%100>=20))?'imprezy':'imprez')+' w tym miesiącu'+(cyc.length?' + '+cyc.length+' cykl'+(cyc.length>1?'e':''):'');
+  const n=activeCount(true);
+  $('c-count').innerHTML=esc(inMonth.length+' '+plural(inMonth.length)+' w tym miesiącu'+(cyc.length?' + '+cyc.length+' cykl'+(cyc.length>1?'e':''):''))+(n?` · <button type="button" class="ib" data-reset style="padding:3px 8px;font-size:12px">filtry: ${n} ✕</button>`:'');
   let html='';
   for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
-    const k=iso(d), evs=(byDay[k]||[]).sort((a,b)=>Math.max(...b.distances)-Math.max(...a.distances));
+    const k=iso(d), evs=(byDay[k]||[]).slice().sort((a,b)=>b.maxDist-a.maxDist);
     const cls=['day']; if(d.getMonth()!==cal.m)cls.push('out'); if(+d===+today)cls.push('today'); if(d<today)cls.push('past'); if(d.getDay()===0||d.getDay()===6)cls.push('we');
-    const show=evs.slice(0,3);
     html+=`<div class="${cls.join(' ')}" data-d="${k}"><span class="dn">${d.getDate()}</span>`+
-      show.map(r=>`<div class="ev${r.approx?' ap':''}" style="--c:var(${catOf(r).c})" data-id="${r.id}" title="${r.name}${r.approx?' (termin orientacyjny)':''}">${r.approx?'~ ':''}${r.short||r.name}</div>`).join('')+
+      evs.slice(0,3).map(r=>`<div class="ev${r.approx?' ap':''}" style="--c:var(${catOf(r).c})" data-id="${esc(r.id)}" title="${esc(r.name+(r.approx?' (termin orientacyjny)':''))}">${r.approx?'~ ':''}${esc(r.short||r.name)}</div>`).join('')+
       (evs.length>3?`<div class="more">+${evs.length-3} więcej</div>`:'')+
       (evs.length?`<div class="dots">${evs.slice(0,6).map(r=>`<span class="dot" style="--c:var(${catOf(r).c})"></span>`).join('')}</div>`:'')+
       `</div>`;
   }
   $('c-grid').innerHTML=html;
-  $('c-grid').querySelectorAll('.ev').forEach(el=>el.onclick=e=>{e.stopPropagation(); const r=DATA.races.find(x=>x.id===el.dataset.id); openModal(r.name,[r]);});
-  $('c-grid').querySelectorAll('.day').forEach(el=>el.onclick=()=>{ const k=el.dataset.d, d=pd(k); openModal(d.toLocaleDateString('pl-PL',{weekday:'long',day:'numeric',month:'long',year:'numeric'}), byDay[k]||[]); });
+}
+// jeden delegowany handler zamiast podpinania przy każdym renderze
+$('calview').addEventListener('click',e=>{
+  const ev=e.target.closest('.ev,.cyc'); if(ev){ e.stopPropagation(); const r=byId[ev.dataset.id]; if(r) openModal(r.name,[r]); return; }
+  const day=e.target.closest('.day'); if(day){ const k=day.dataset.d, d=pd(k); openModal(d.toLocaleDateString('pl-PL',{weekday:'long',day:'numeric',month:'long',year:'numeric'}), byDay[k]||[]); }
+});
+
+function renderList(){
+  const rs=races.filter(r=>matches(r,false));
+  const so=$('sort').value;
+  const dl=r=>{const c=currentPrice(r);return c&&c.cur.until?+pd(c.cur.until):Infinity;};
+  const pr=r=>{const c=currentPrice(r);return c?Number(c.cur.amount):Infinity;};
+  const cmp=(x,y)=>x===y?0:(x<y?-1:1);
+  rs.sort((a,b)=> so==='name'?a.name.localeCompare(b.name,'pl') : so==='deadline'?(cmp(dl(a),dl(b))||cmp(+pd(a.date),+pd(b.date))) : so==='price'?(cmp(pr(a),pr(b))||cmp(+pd(a.date),+pd(b.date))) : cmp(+pd(a.date),+pd(b.date)));
+  const n=activeCount(false);
+  $('count').innerHTML=esc(rs.length+' '+plural(rs.length))+(n?` · <button type="button" class="ib" data-reset style="padding:3px 8px;font-size:12px">aktywne filtry: ${n} ✕</button>`:'');
+  $('list').innerHTML = rs.length? rs.map(card).join('') : emptyHtml('Brak biegów dla wybranych filtrów.',false);
 }
 
 function nextUpdate(){
-  const now=new Date();
-  const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Warsaw',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now).map(x=>[x.type,x.value]));
-  const base=new Date(+p.year,+p.month-1,+p.day);
-  for(let i=1;i<=7;i++){ const d=new Date(base); d.setDate(base.getDate()+i); if(UPDATE_DAYS.includes(d.getDay())) return d; }
+  try{
+    const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Warsaw',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(x=>[x.type,x.value]));
+    const base=new Date(+p.year,+p.month-1,+p.day);
+    for(let i=1;i<=7;i++){ const d=new Date(base); d.setDate(base.getDate()+i); if(UPDATE_DAYS.includes(d.getDay())) return d; }
+  }catch(e){}
+  return null;
 }
-
-function renderList(){
-  let rs=DATA.races.filter(r=>matches(r,false));
-  const so=$('sort').value;
-  const dl=r=>{const c=currentPrice(r);return c&&c.cur.until?pd(c.cur.until):new Date(9e15);};
-  const pr=r=>{const c=currentPrice(r);return c?c.cur.amount:1e9;};
-  rs.sort((a,b)=> so==='name'?a.name.localeCompare(b.name,'pl') : so==='deadline'?dl(a)-dl(b) : so==='price'?pr(a)-pr(b) : pd(a.date)-pd(b.date));
-  $('count').textContent = rs.length+' '+(rs.length===1?'impreza':(rs.length%10>=2&&rs.length%10<=4&&(rs.length%100<10||rs.length%100>=20))?'imprezy':'imprez');
-  $('list').innerHTML = rs.length? rs.map(card).join('') : '<div class="empty">Brak biegów dla wybranych filtrów.</div>';
+function fmtUpdated(s){
+  const d=new Date(s); if(isNaN(d)) return '—';
+  try{ return d.toLocaleString('pl-PL',{dateStyle:'long',timeStyle:'short',timeZone:'Europe/Warsaw'}); }
+  catch(e){ return d.toLocaleString('pl-PL'); }
 }
-const lu=new Date(DATA.lastUpdated);
 const nu=nextUpdate();
-$('meta').innerHTML='Ostatnia aktualizacja: <b>'+lu.toLocaleString('pl-PL',{dateStyle:'long',timeStyle:'short',timeZone:'Europe/Warsaw'})+'</b> · Następna: <b>'+nu.toLocaleDateString('pl-PL',{weekday:'long',day:'numeric',month:'long'})+', ok. 00:00</b> · '+DATA.races.length+' imprez w bazie';
-$('ftoggle').onclick=()=>{const a=$('aside');a.classList.toggle('closed');$('ftoggle').textContent=a.classList.contains('closed')?'⚙ Pokaż filtry':'⚙ Ukryj filtry';};
+$('meta').innerHTML='Ostatnia aktualizacja: <b>'+esc(fmtUpdated(DATA.lastUpdated))+'</b>'+(nu?' · Następna: <b>'+esc(nu.toLocaleDateString('pl-PL',{weekday:'long',day:'numeric',month:'long'}))+', ok. 00:00</b>':'')+' · '+races.length+' imprez w bazie';
+$('ftoggle').onclick=()=>{$('aside').classList.toggle('closed');updToggle();};
 load(); setView(location.hash.slice(1));
 }
 })();
