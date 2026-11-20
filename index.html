@@ -235,6 +235,54 @@ input[type=search]:focus,select:focus{outline:2px solid color-mix(in srgb,var(--
 .day.we{background:color-mix(in srgb,var(--accent) 3%,transparent)}
 .day.out{background:color-mix(in srgb,var(--bg) 60%,transparent)}
 @media(max-width:700px){.calbar .count{width:100%;margin-left:0!important;font-size:14px;color:var(--mute)}}
+
+/* ---------- szerokie ekrany + kafelki (20.11.2026) ---------- */
+header,.tabs,.wrap,footer{max-width:1760px}
+.bar-r{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.seg.lay .tab{padding:6px 12px;font-size:13px}
+.seg.lay .tab svg{width:15px;height:15px}
+#list .mhead{grid-column:1/-1}
+/* karty w dwóch kolumnach na szerokim ekranie */
+@media(min-width:1480px){
+  #list:not(.tiles){grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
+  #list:not(.tiles) .card{grid-template-columns:62px 1fr;grid-template-rows:1fr auto;gap:12px 14px}
+  #list:not(.tiles) .price{grid-column:1/-1;border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:10px;display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 14px}
+  #list:not(.tiles) .price>.status,#list:not(.tiles) .price>.amt,#list:not(.tiles) .price>.until,#list:not(.tiles) .price>.next,#list:not(.tiles) .price>.unk{grid-column:1}
+  #list:not(.tiles) .price>.btn{grid-column:2;grid-row:1/span 3;margin:0}
+  #list:not(.tiles) .price>.gcal{grid-column:1/-1;text-align:left}
+  #list:not(.tiles) .amt{font-size:21px}
+}
+/* kafelki */
+#list.tiles{grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:12px}
+.tile{position:relative;overflow:hidden;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 14px 12px;display:flex;flex-direction:column;gap:6px;cursor:pointer;box-shadow:var(--shadow);transition:border-color .15s,box-shadow .15s,transform .15s;min-width:0}
+.tile::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--c,var(--line))}
+.tile:hover,.tile:focus-visible{border-color:color-mix(in srgb,var(--c,var(--mute)) 50%,var(--line));transform:translateY(-2px);box-shadow:0 2px 6px rgba(20,20,30,.06),0 10px 24px rgba(20,20,30,.08);outline:none}
+.tl-top{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:2px}
+.tl-date{font-size:13px;color:var(--mute);white-space:nowrap}
+.tl-date b{font-size:20px;color:var(--ink);font-weight:800;margin-right:2px;font-variant-numeric:tabular-nums}
+.tl-date .wd{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-right:2px}
+.tl-date .wd.we{color:var(--accent)}
+.tl-top .when{margin:0}
+.tl-name{font-size:15px;font-weight:700;line-height:1.25;margin:2px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tl-loc{font-size:13px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .tags{margin-top:2px}
+.tile .t.s{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tl-foot{margin-top:auto;padding-top:8px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12px}
+.tl-foot .status{font-size:10.5px}
+.tl-price{font-size:16px;font-weight:800;color:var(--ink);white-space:nowrap}
+.tl-price small{font-size:11px;font-weight:500;color:var(--mute);margin-left:3px}
+.tl-approx{font-size:10px;color:var(--warn);font-weight:600}
+@media(max-width:700px){
+  #list.tiles{grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:8px}
+  .tile{padding:12px 10px 10px}
+  .tl-name{font-size:14px}
+  .tl-date b{font-size:18px}
+  .tl-foot{flex-direction:column;align-items:flex-start;gap:2px}
+  .seg.lay .tab span{display:none}
+  .bar-r{width:100%;flex-wrap:nowrap}
+  .seg.lay{display:inline-flex;width:auto;flex:none}.seg.lay .tab{flex:none;padding:7px 12px}
+  .bar #sort{flex:1;min-width:0}
+}
 </style>
 </head>
 <body>
@@ -278,12 +326,18 @@ input[type=search]:focus,select:focus{outline:2px solid color-mix(in srgb,var(--
 <main>
   <div class="bar">
     <div class="count" id="count"></div>
+    <div class="bar-r">
+    <div class="seg lay" id="layout" role="group" aria-label="Układ listy">
+      <button type="button" class="tab" data-l="list" title="Szczegółowe karty"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/></svg><span>Karty</span></button>
+      <button type="button" class="tab" data-l="tiles" title="Kafelki — tylko najważniejsze"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg><span>Kafelki</span></button>
+    </div>
     <select id="sort">
       <option value="date">Sortuj: najbliższe</option>
       <option value="deadline">Sortuj: najbliższa podwyżka</option>
       <option value="price">Sortuj: najtańsze</option>
       <option value="name">Sortuj: nazwa A–Z</option>
     </select>
+    </div>
   </div>
   <div class="activebar" id="activebar" hidden></div>
   <div class="list" id="list"></div>
@@ -430,6 +484,15 @@ const mSel=$('f-month');
 const monthKeys=[...new Set(races.map(r=>r.date.slice(0,7)))].sort();
 monthKeys.forEach(k=>{const [y,m]=k.split('-');mSel.add(new Option(MONTHS_FULL[+m-1]+' '+y,k));});
 const SORTS=['date','deadline','price','name'];
+const LAY_KEY='biegi-uklad';
+let layout='list'; try{ if(localStorage.getItem(LAY_KEY)==='tiles') layout='tiles'; }catch(e){}
+function setLayout(l){ layout=l==='tiles'?'tiles':'list'; try{localStorage.setItem(LAY_KEY,layout);}catch(e){}
+  document.querySelectorAll('#layout .tab').forEach(b=>{ b.classList.toggle('on',b.dataset.l===layout); b.setAttribute('aria-pressed',b.dataset.l===layout); });
+  $('list').classList.toggle('tiles',layout==='tiles'); }
+document.querySelectorAll('#layout .tab').forEach(b=>b.onclick=()=>{ setLayout(b.dataset.l); render(); });
+const openTile=t=>{ const r=byId[t.dataset.id]; if(r) openModal(r.name,[r]); };
+$('list').addEventListener('click',e=>{ const t=e.target.closest('.tile'); if(t&&!e.target.closest('a,button')) openTile(t); });
+$('list').addEventListener('keydown',e=>{ const t=e.target.closest('.tile'); if(t&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); openTile(t); } });
 
 // Safari starszych wersji nie wysyła "input" dla checkboxów i selectów — słuchamy obu zdarzeń
 $('q').addEventListener('input',()=>{render();save();});
@@ -530,6 +593,26 @@ function card(r){
   </article>`;
 }
 
+function tile(r){
+  const d=pd(r.date), cp=currentPrice(r), st=regState(r), cat=catOf(r);
+  const dn=days(r.date), de=r.end?days(r.end):dn;
+  const when = dn<0&&de>=0?'<span class="when hot">trwa</span>' : dn===0?'<span class="when hot">dziś</span>' : dn===1?'<span class="when hot">jutro</span>' : (dn>1&&dn<=60)?`<span class="when">za ${dn} dni</span>`:'';
+  const ds=[...r.distances].sort((a,b)=>b-a), shown=ds.slice(0,3);
+  const stLabel={open:'Zapisy otwarte',soon:'Zapisy wkrótce',closed:'Zakończony',unknown:'Zapisy: brak info'}[st];
+  const stCls={open:'open',soon:'soon',closed:'closed',unknown:'closed'}[st];
+  let foot=`<span class="status ${stCls}">${stLabel}</span>`;
+  if(cp){ foot+=`<span class="tl-price">${esc(cp.cur.amount)} ${esc(r.price.currency)}${cp.cur.until?`<small>do ${pd(cp.cur.until).getDate()} ${MONTHS[pd(cp.cur.until).getMonth()]}</small>`:''}</span>`; }
+  const endTxt=r.end?` – ${pd(r.end).getDate()} ${MONTHS[pd(r.end).getMonth()]}`:'';
+  return `<article class="tile" style="--c:var(${cat.c})" data-id="${esc(r.id)}" tabindex="0" title="${esc(r.name)} — kliknij, aby zobaczyć szczegóły">
+    <div class="tl-top"><span class="tl-date"><span class="wd${d.getDay()%6===0?' we':''}">${WD[d.getDay()]}</span> <b>${d.getDate()}</b>${MONTHS[d.getMonth()]}${d.getFullYear()!==today.getFullYear()?' '+d.getFullYear():''}${endTxt}</span>${when}</div>
+    ${r.approx?'<div class="tl-approx">termin orientacyjny</div>':''}
+    <h3 class="tl-name">${esc(r.name)}</h3>
+    <div class="tl-loc">${esc(r.city)}${r.terrain&&r.terrain!=='ulica'?' · '+esc(terrLabel(r.terrain)):''}</div>
+    <div class="tags">${shown.map((x,i)=>`<span class="t d${i===0&&ds.length>1?' max':''}">${esc(fmtKm(x))}</span>`).join('')}${ds.length>3?`<span class="t">+${ds.length-3}</span>`:''}${r.series.length?`<span class="t s" title="${esc(r.series.join(', '))}">👑 ${esc(r.series[0])}${r.series.length>1?' +'+(r.series.length-1):''}</span>`:''}</div>
+    <div class="tl-foot">${foot}</div>
+  </article>`;
+}
+
 // ---------- widoki ----------
 let view='lista';
 const cal={y:today.getFullYear(),m:today.getMonth()};
@@ -617,12 +700,13 @@ function renderList(){
   rs.sort((a,b)=> so==='name'?a.name.localeCompare(b.name,'pl') : so==='deadline'?(cmp(dl(a),dl(b))||cmp(+pd(a.date),+pd(b.date))) : so==='price'?(cmp(pr(a),pr(b))||cmp(+pd(a.date),+pd(b.date))) : cmp(+pd(a.date),+pd(b.date)));
   const n=activeCount(false);
   $('count').textContent=rs.length+' '+plural(rs.length);
+  const draw=layout==='tiles'?tile:card;
   let listHtml='';
   if(so==='date'){
     const per={}; rs.forEach(r=>{const k=r.date.slice(0,7); per[k]=(per[k]||0)+1;});
     let cur='';
-    rs.forEach(r=>{ const k=r.date.slice(0,7); if(k!==cur){ cur=k; const [y,m]=k.split('-'); listHtml+=`<h2 class="mhead">${MONTHS_FULL[+m-1]} ${y}<small>${per[k]} ${plural(per[k])}</small></h2>`; } listHtml+=card(r); });
-  } else listHtml=rs.map(card).join('');
+    rs.forEach(r=>{ const k=r.date.slice(0,7); if(k!==cur){ cur=k; const [y,m]=k.split('-'); listHtml+=`<h2 class="mhead">${MONTHS_FULL[+m-1]} ${y}<small>${per[k]} ${plural(per[k])}</small></h2>`; } listHtml+=draw(r); });
+  } else listHtml=rs.map(draw).join('');
   $('list').innerHTML = rs.length? listHtml : emptyHtml('Brak biegów dla wybranych filtrów.',false);
 }
 
@@ -657,7 +741,7 @@ $('meta').innerHTML='Ostatnia aktualizacja: <b>'+esc(fmtUpdated(DATA.lastUpdated
 })();
 const tt=$('totop'); window.addEventListener('scroll',()=>{ tt.hidden=window.scrollY<900; },{passive:true}); tt.onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
 $('ftoggle').onclick=()=>{$('aside').classList.toggle('closed');updToggle();};
-load(); setView(location.hash.slice(1));
+load(); setLayout(layout); setView(location.hash.slice(1));
 }
 })();
 </script>
